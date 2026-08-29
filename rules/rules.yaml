@@ -1,0 +1,66 @@
+# Reglas de detección de secretos.
+#
+# Nota: en los `ejemplo` de proveedores con validador, un '|' parte el token para
+# que el literal contiguo NO exista en este archivo (si no, el push protection de
+# GitHub lo bloquea, con razón). El test quita el '|' antes de escanear. Editable a propósito: agregá las de tu stack.
+#
+# Cada regla:
+#   nombre     : qué es
+#   patron     : expresión regular que lo reconoce
+#   entropia   : (opcional) entropía mínima de Shannon del match para contar como real.
+#                Sube la barra para patrones genéricos y baja los falsos positivos.
+#   ejemplo    : un valor FICTICIO que la regla debe atrapar (lo usan los tests)
+#
+# Filosofía: preferimos un patrón específico y anclado a un proveedor antes que uno
+# genérico. Un patrón genérico de "api_key = ..." genera tanto ruido que la gente
+# apaga la herramienta — y una herramienta apagada no encuentra nada.
+
+- nombre: "AWS Access Key ID"
+  patron: 'AKIA[0-9A-Z]{16}'
+  ejemplo: "AKIAIOSFODNN7EXAMPLE"
+
+- nombre: "AWS Secret Access Key"
+  patron: 'aws_secret_access_key\s*[=:]\s*["'']?([A-Za-z0-9/+]{40})'
+  entropia: 4.0
+  ejemplo: 'aws_secret_access_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY1"'
+
+- nombre: "GitHub Personal Access Token"
+  patron: 'ghp_[A-Za-z0-9]{36}'
+  ejemplo: "ghp_1234567890abcde|fghijklmnopqrstuvwx12"
+
+- nombre: "GitHub fine-grained token"
+  patron: 'github_pat_[A-Za-z0-9_]{22,}'
+  ejemplo: "github_pat_11ABCDEFG0abc|defghijkl_mnopqrstuvwxyz1234567890ABCD"
+
+- nombre: "Slack token"
+  patron: 'xox[baprs]-[A-Za-z0-9-]{10,}'
+  ejemplo: "xoxb-123456789012-abcde|fghijklmno"
+
+- nombre: "Stripe live secret key"
+  patron: 'sk_live_[A-Za-z0-9]{20,}'
+  ejemplo: "sk_live_abcdefgh|ijklmnopqrstuvwx"
+
+- nombre: "Stripe webhook secret"
+  patron: 'whsec_[A-Za-z0-9]{20,}'
+  ejemplo: "whsec_abcdefghi|jklmnopqrstuvwxyz12"
+
+- nombre: "Google API key"
+  patron: 'AIza[0-9A-Za-z_-]{35}'
+  ejemplo: "AIzaSyA1234567890abcd|efghijklmnopqrstuv"
+
+- nombre: "OpenAI / OpenRouter key"
+  patron: 'sk-(or-v1-)?[A-Za-z0-9]{20,}'
+  ejemplo: "sk-or-v1-abcdef0123|456789abcdef0123456789"
+
+- nombre: "Private key block"
+  patron: '-----BEGIN (RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY-----'
+  ejemplo: "-----BEGIN RSA PRIVATE KEY-----"
+
+- nombre: "JSON Web Token"
+  patron: 'eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}'
+  ejemplo: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0|NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
+
+- nombre: "Generic high-entropy secret assignment"
+  patron: '(?i)(secret|token|passwd|password|api[_-]?key)\s*[=:]\s*["'']([A-Za-z0-9/+=_!@#%&*.-]{24,})["'']'
+  entropia: 4.2
+  ejemplo: 'password = "S9v!aX2p_Qz7Lm3RtWc8Yb1Nf6Kd0Hj"'
